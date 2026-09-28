@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Showcase — Air Quality Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Dashboard-specific: quick-action buttons */
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+        .quick-action-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 20px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--card-bg); font-size: 13.5px; font-weight: 500;
+            color: var(--text); cursor: pointer; transition: all .15s;
+            text-decoration: none; box-shadow: var(--shadow);
+        }
+        .quick-action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary); color: var(--primary); }
+        .quick-action-btn .qa-icon { font-size: 22px; }
+        /* Recent readings mini table */
+        .reading-row-violation td:first-child { border-left: 3px solid var(--danger); }
+        
+        /* Fallback badges since api.js might provide these functions normally */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-danger { background-color: #ffebee; color: #c62828; }
+        .badge-warning { background-color: #fff8e1; color: #f57f17; }
+        .badge-success { background-color: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌿</div>
+        <div class="logo-title">Air Quality Hub</div>
+        <div class="logo-sub">Urban Monitoring System</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="showcase-dashboard.html" class="nav-link active"><span class="icon">📊</span> Showcase Dashboard</a>
+        <a href="index.html" class="nav-link"><span class="icon">📊</span> Real Dashboard</a>
+        <div class="nav-section">Management</div>
+        <a href="industries.html" class="nav-link"><span class="icon">🏭</span> Industries</a>
+        <a href="stations.html"   class="nav-link"><span class="icon">📡</span> Monitoring Stations</a>
+        <div class="nav-section">Monitoring</div>
+        <a href="readings.html"   class="nav-link"><span class="icon">📈</span> Air Quality Readings</a>
+        <a href="violations.html" class="nav-link"><span class="icon">🚨</span> Violations</a>
+        <div class="nav-section">Compliance</div>
+        <a href="fines.html"      class="nav-link"><span class="icon">💰</span> Fines & Payments</a>
+    </nav>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">📊 Dashboard Showcase (Mock Data)</div>
+            <div class="topbar-sub">Urban Air Quality Monitoring & Industrial Emissions Fine Management</div>
+        </div>
+        <div class="topbar-right">
+            <div class="server-status">
+                <div class="status-dot online" id="serverDot"></div>
+                <span id="serverStatus">Showcase Mode</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">🏭</div>
+                <div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Industries</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">📡</div>
+                <div>
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Monitoring Stations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">📈</div>
+                <div>
+                    <div class="stat-value">1,452</div>
+                    <div class="stat-label">Total Readings</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">🚨</div>
+                <div>
+                    <div class="stat-value">34</div>
+                    <div class="stat-label">Violations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">💰</div>
+                <div>
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Pending Fines</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><span class="card-title">⚡ Quick Actions</span></div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="industries.html" class="quick-action-btn"><span class="qa-icon">🏭</span> Add Industry</a>
+                    <a href="stations.html"   class="quick-action-btn"><span class="qa-icon">📡</span> Add Station</a>
+                    <a href="readings.html"   class="quick-action-btn"><span class="qa-icon">📈</span> Submit Reading</a>
+                    <a href="violations.html" class="quick-action-btn"><span class="qa-icon">🚨</span> View Violations</a>
+                    <a href="fines.html"      class="quick-action-btn"><span class="qa-icon">💰</span> Manage Fines</a>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;flex-wrap:wrap;">
+
+            <!-- Recent Violations -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🚨 Recent Violations</span>
+                    <a href="violations.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Industry</th>
+                                <th>Pollutant</th>
+                                <th>Measured</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Apex Chemicals</td>
+                                <td>PM2.5</td>
+                                <td><strong>85.4</strong></td>
+                                <td><span class="badge badge-danger">HIGH</span></td>
+                            </tr>
+                            <tr>
+                                <td>SteelWorks Inc.</td>
+                                <td>CO</td>
+                                <td><strong>12.1</strong></td>
+                                <td><span class="badge badge-warning">MEDIUM</span></td>
+                            </tr>
+                            <tr>
+                                <td>Global PetroCorp</td>
+                                <td>NO2</td>
+                                <td><strong>55.3</strong></td>
+                                <td><span class="badge badge-warning">MEDIUM</span></td>
+                            </tr>
+                            <tr>
+                                <td>Apex Chemicals</td>
+                                <td>PM10</td>
+                                <td><strong>120.0</strong></td>
+                                <td><span class="badge badge-danger">HIGH</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pending Fines -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💰 Pending Fines</span>
+                    <a href="fines.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Industry</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Apex Chemicals</td>
+                                <td><strong>₹50,000</strong></td>
+                                <td><span class="badge badge-warning">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>SteelWorks Inc.</td>
+                                <td><strong>₹15,000</strong></td>
+                                <td><span class="badge badge-warning">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>Global PetroCorp</td>
+                                <td><strong>₹25,000</strong></td>
+                                <td><span class="badge badge-warning">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>City Manufacturing</td>
+                                <td><strong>₹10,000</strong></td>
+                                <td><span class="badge badge-warning">PENDING</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Readings -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📈 Recent Air Quality Readings</span>
+                <a href="readings.html" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Station</th>
+                            <th>Industry</th>
+                            <th>PM2.5</th>
+                            <th>PM10</th>
+                            <th>CO</th>
+                            <th>NO₂</th>
+                            <th>Violation</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="reading-row-violation">
+                            <td>Station Alpha (North)</td>
+                            <td>Apex Chemicals</td>
+                            <td style="color:var(--danger);font-weight:700">85.4</td>
+                            <td>120.0</td>
+                            <td>3.2</td>
+                            <td>40.1</td>
+                            <td><span class="badge badge-danger">⚠ YES</span></td>
+                            <td>Today, 10:45 AM</td>
+                        </tr>
+                        <tr>
+                            <td>Station Beta (South)</td>
+                            <td>City Manufacturing</td>
+                            <td>45.2</td>
+                            <td>70.5</td>
+                            <td>2.1</td>
+                            <td>20.3</td>
+                            <td><span class="badge badge-success">✓ NO</span></td>
+                            <td>Today, 10:30 AM</td>
+                        </tr>
+                        <tr class="reading-row-violation">
+                            <td>Station Gamma (East)</td>
+                            <td>SteelWorks Inc.</td>
+                            <td>55.1</td>
+                            <td>90.2</td>
+                            <td style="color:var(--danger);font-weight:700">12.1</td>
+                            <td>30.5</td>
+                            <td><span class="badge badge-danger">⚠ YES</span></td>
+                            <td>Today, 09:15 AM</td>
+                        </tr>
+                        <tr>
+                            <td>Station Delta (West)</td>
+                            <td>Green Energy Plant</td>
+                            <td>15.0</td>
+                            <td>25.4</td>
+                            <td>0.5</td>
+                            <td>10.2</td>
+                            <td><span class="badge badge-success">✓ NO</span></td>
+                            <td>Today, 08:00 AM</td>
+                        </tr>
+                        <tr class="reading-row-violation">
+                            <td>Station Epsilon (Central)</td>
+                            <td>Global PetroCorp</td>
+                            <td>58.9</td>
+                            <td>88.1</td>
+                            <td>4.5</td>
+                            <td style="color:var(--danger);font-weight:700">55.3</td>
+                            <td><span class="badge badge-danger">⚠ YES</span></td>
+                            <td>Yesterday, 11:20 PM</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main -->
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industries — Air Quality Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌿</div>
+        <div class="logo-title">Air Quality Hub</div>
+        <div class="logo-sub">Urban Monitoring System</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="index.html"      class="nav-link"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Management</div>
+        <a href="industries.html" class="nav-link active"><span class="icon">🏭</span> Industries</a>
+        <a href="stations.html"   class="nav-link"><span class="icon">📡</span> Monitoring Stations</a>
+        <div class="nav-section">Monitoring</div>
+        <a href="readings.html"   class="nav-link"><span class="icon">📈</span> Air Quality Readings</a>
+        <a href="violations.html" class="nav-link"><span class="icon">🚨</span> Violations</a>
+        <div class="nav-section">Compliance</div>
+        <a href="fines.html"      class="nav-link"><span class="icon">💰</span> Fines & Payments</a>
+    </nav>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">🏭 Industry Management</div>
+            <div class="topbar-sub">Add, update, and monitor industrial facilities</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">＋ Add Industry</button>
+    </div>
+
+    <div class="content">
+
+        <div id="alert" class="alert"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Registered Industries</span>
+                <button class="btn btn-outline btn-sm" onclick="loadIndustries()">↻ Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Industry Name</th>
+                            <th>Location</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Compliance Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="industryTable">
+                        <tr><td colspan="7" class="loading">Loading industries…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ── Add / Edit Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Add Industry</span>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="industryId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Industry Name *</label>
+                    <input type="text" id="industryName" placeholder="e.g. ABC Manufacturing">
+                </div>
+                <div class="form-group">
+                    <label>Location *</label>
+                    <input type="text" id="location" placeholder="e.g. Coimbatore">
+                </div>
+                <div class="form-group">
+                    <label>Contact Person</label>
+                    <input type="text" id="contactPerson" placeholder="e.g. John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input type="email" id="contactEmail" placeholder="e.g. contact@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Compliance Status</label>
+                    <select id="complianceStatus">
+                        <option value="COMPLIANT">COMPLIANT</option>
+                        <option value="VIOLATION">VIOLATION</option>
+                        <option value="UNDER_REVIEW">UNDER REVIEW</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveIndustry()">💾 Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    let editingId = null;
+
+    async function loadIndustries() {
+        try {
+            const industries = await apiGet('/industries');
+            const tbody = document.getElementById('industryTable');
+            if (industries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏭</div><p>No industries yet. Click "Add Industry" to get started.</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = industries.map(ind => `
+                <tr>
+                    <td>${ind.id}</td>
+                    <td><strong>${ind.industryName}</strong></td>
+                    <td>${ind.location}</td>
+                    <td>${ind.contactPerson || '—'}</td>
+                    <td>${ind.contactEmail || '—'}</td>
+                    <td>${complianceBadge(ind.complianceStatus)}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editIndustry(${ind.id})">✏ Edit</button>
+                        <button class="btn btn-danger  btn-sm" onclick="deleteIndustry(${ind.id}, '${ind.industryName}')">🗑 Delete</button>
+                    </td>
+                </tr>`).join('');
+        } catch (e) {
+            showAlert('alert', 'Failed to load industries: ' + e.message, 'danger');
+        }
+    }
+
+    function openAddModal() {
+        editingId = null;
+        document.getElementById('modalTitle').textContent = 'Add Industry';
+        document.getElementById('industryId').value = '';
+        document.getElementById('industryName').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('contactPerson').value = '';
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('complianceStatus').value = 'COMPLIANT';
+        document.getElementById('modal').classList.add('show');
+    }
+
+    async function editIndustry(id) {
+        try {
+            const ind = await apiGet('/industries/' + id);
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Industry';
+            document.getElementById('industryName').value    = ind.industryName;
+            document.getElementById('location').value        = ind.location;
+            document.getElementById('contactPerson').value   = ind.contactPerson || '';
+            document.getElementById('contactEmail').value    = ind.contactEmail || '';
+            document.getElementById('complianceStatus').value = ind.complianceStatus;
+            document.getElementById('modal').classList.add('show');
+        } catch (e) {
+            showAlert('alert', 'Could not load industry: ' + e.message, 'danger');
+        }
+    }
+
+    async function saveIndustry() {
+        const name = document.getElementById('industryName').value.trim();
+        const loc  = document.getElementById('location').value.trim();
+        if (!name || !loc) { showAlert('alert', 'Industry Name and Location are required.', 'danger'); return; }
+
+        const payload = {
+            industryName:     name,
+            location:         loc,
+            contactPerson:    document.getElementById('contactPerson').value.trim(),
+            contactEmail:     document.getElementById('contactEmail').value.trim(),
+            complianceStatus: document.getElementById('complianceStatus').value
+        };
+
+        try {
+            if (editingId) {
+                await apiPut('/industries/' + editingId, payload);
+                showAlert('alert', '✅ Industry updated successfully!', 'success');
+            } else {
+                await apiPost('/industries', payload);
+                showAlert('alert', '✅ Industry created successfully!', 'success');
+            }
+            closeModal();
+            loadIndustries();
+        } catch (e) {
+            showAlert('alert', 'Save failed: ' + e.message, 'danger');
+        }
+    }
+
+    async function deleteIndustry(id, name) {
+        if (!confirm(`Delete industry "${name}"? This cannot be undone.`)) return;
+        try {
+            await apiDelete('/industries/' + id);
+            showAlert('alert', `✅ Industry "${name}" deleted.`, 'success');
+            loadIndustries();
+        } catch (e) {
+            showAlert('alert', 'Delete failed: ' + e.message, 'danger');
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('show');
+    }
+
+    loadIndustries();
+</script>
+</body>
+</html>

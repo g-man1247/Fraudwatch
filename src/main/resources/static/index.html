@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Air Quality Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Dashboard-specific: quick-action buttons */
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+        .quick-action-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 20px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--card-bg); font-size: 13.5px; font-weight: 500;
+            color: var(--text); cursor: pointer; transition: all .15s;
+            text-decoration: none; box-shadow: var(--shadow);
+        }
+        .quick-action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary); color: var(--primary); }
+        .quick-action-btn .qa-icon { font-size: 22px; }
+        /* Recent readings mini table */
+        .reading-row-violation td:first-child { border-left: 3px solid var(--danger); }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌿</div>
+        <div class="logo-title">Air Quality Hub</div>
+        <div class="logo-sub">Urban Monitoring System</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="index.html"      class="nav-link active"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Management</div>
+        <a href="industries.html" class="nav-link"><span class="icon">🏭</span> Industries</a>
+        <a href="stations.html"   class="nav-link"><span class="icon">📡</span> Monitoring Stations</a>
+        <div class="nav-section">Monitoring</div>
+        <a href="readings.html"   class="nav-link"><span class="icon">📈</span> Air Quality Readings</a>
+        <a href="violations.html" class="nav-link"><span class="icon">🚨</span> Violations</a>
+        <div class="nav-section">Compliance</div>
+        <a href="fines.html"      class="nav-link"><span class="icon">💰</span> Fines & Payments</a>
+    </nav>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">📊 Dashboard Overview</div>
+            <div class="topbar-sub">Urban Air Quality Monitoring & Industrial Emissions Fine Management</div>
+        </div>
+        <div class="topbar-right">
+            <div class="server-status">
+                <div class="status-dot" id="serverDot"></div>
+                <span id="serverStatus">Connecting…</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">🏭</div>
+                <div>
+                    <div class="stat-value" id="statIndustries">—</div>
+                    <div class="stat-label">Industries</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">📡</div>
+                <div>
+                    <div class="stat-value" id="statStations">—</div>
+                    <div class="stat-label">Monitoring Stations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">📈</div>
+                <div>
+                    <div class="stat-value" id="statReadings">—</div>
+                    <div class="stat-label">Total Readings</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">🚨</div>
+                <div>
+                    <div class="stat-value" id="statViolations">—</div>
+                    <div class="stat-label">Violations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">💰</div>
+                <div>
+                    <div class="stat-value" id="statPending">—</div>
+                    <div class="stat-label">Pending Fines</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><span class="card-title">⚡ Quick Actions</span></div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="industries.html" class="quick-action-btn"><span class="qa-icon">🏭</span> Add Industry</a>
+                    <a href="stations.html"   class="quick-action-btn"><span class="qa-icon">📡</span> Add Station</a>
+                    <a href="readings.html"   class="quick-action-btn"><span class="qa-icon">📈</span> Submit Reading</a>
+                    <a href="violations.html" class="quick-action-btn"><span class="qa-icon">🚨</span> View Violations</a>
+                    <a href="fines.html"      class="quick-action-btn"><span class="qa-icon">💰</span> Manage Fines</a>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;flex-wrap:wrap;">
+
+            <!-- Recent Violations -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🚨 Recent Violations</span>
+                    <a href="violations.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Industry</th>
+                                <th>Pollutant</th>
+                                <th>Measured</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentViolations">
+                            <tr><td colspan="4" class="loading">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pending Fines -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💰 Pending Fines</span>
+                    <a href="fines.html" class="btn btn-outline btn-sm">View All</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Industry</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingFines">
+                            <tr><td colspan="3" class="loading">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Readings -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📈 Recent Air Quality Readings</span>
+                <a href="readings.html" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Station</th>
+                            <th>Industry</th>
+                            <th>PM2.5</th>
+                            <th>PM10</th>
+                            <th>CO</th>
+                            <th>NO₂</th>
+                            <th>Violation</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentReadings">
+                        <tr><td colspan="8" class="loading">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main -->
+
+<script src="js/api.js"></script>
+<script>
+(async function() {
+
+    // ── Check server connection ──────────────────────────────────
+    async function checkServer() {
+        try {
+            await apiGet('/industries');
+            document.getElementById('serverDot').classList.add('online');
+            document.getElementById('serverStatus').textContent = 'Server Online';
+        } catch {
+            document.getElementById('serverStatus').textContent = 'Server Offline';
+        }
+    }
+
+    // ── Load dashboard stats ─────────────────────────────────────
+    async function loadStats() {
+        try {
+            const [industries, stations, readings, violations, fines] = await Promise.all([
+                apiGet('/industries'),
+                apiGet('/stations'),
+                apiGet('/air-quality/readings'),
+                apiGet('/violations'),
+                apiGet('/fines')
+            ]);
+
+            document.getElementById('statIndustries').textContent = industries.length;
+            document.getElementById('statStations').textContent   = stations.length;
+            document.getElementById('statReadings').textContent   = readings.length;
+            document.getElementById('statViolations').textContent = violations.length;
+
+            const pending = fines.filter(f => f.paymentStatus === 'PENDING').length;
+            document.getElementById('statPending').textContent = pending;
+
+            loadRecentViolations(violations);
+            loadPendingFines(fines);
+            loadRecentReadings(readings);
+        } catch (e) {
+            console.error('Stats load error:', e);
+        }
+    }
+
+    function loadRecentViolations(violations) {
+        const tbody = document.getElementById('recentViolations');
+        const recent = violations.slice(-5).reverse();
+        if (recent.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">✅</div><p>No violations recorded</p></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = recent.map(v => `
+            <tr>
+                <td>${v.industry ? v.industry.industryName : '—'}</td>
+                <td>${v.pollutant}</td>
+                <td><strong>${v.measuredValue}</strong></td>
+                <td>${severityBadge(v.severity)}</td>
+            </tr>`).join('');
+    }
+
+    function loadPendingFines(fines) {
+        const tbody = document.getElementById('pendingFines');
+        const pending = fines.filter(f => f.paymentStatus === 'PENDING').slice(-5).reverse();
+        if (pending.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">✅</div><p>No pending fines</p></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = pending.map(f => `
+            <tr>
+                <td>${f.industry ? f.industry.industryName : '—'}</td>
+                <td><strong>₹${f.fineAmount.toLocaleString('en-IN')}</strong></td>
+                <td>${paymentBadge(f.paymentStatus)}</td>
+            </tr>`).join('');
+    }
+
+    function loadRecentReadings(readings) {
+        const tbody = document.getElementById('recentReadings');
+        const recent = readings.slice(-8).reverse();
+        if (recent.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📡</div><p>No readings yet</p></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = recent.map(r => `
+            <tr class="${r.violationDetected ? 'reading-row-violation' : ''}">
+                <td>${r.station ? r.station.stationName : '—'}</td>
+                <td>${r.industry ? r.industry.industryName : '—'}</td>
+                <td class="${r.pm25 > 60 ? 'danger' : ''}" style="${r.pm25 > 60 ? 'color:var(--danger);font-weight:700' : ''}">${r.pm25 ?? '—'}</td>
+                <td>${r.pm10 ?? '—'}</td>
+                <td>${r.co ?? '—'}</td>
+                <td>${r.no2 ?? '—'}</td>
+                <td>${r.violationDetected
+                        ? '<span class="badge badge-danger">⚠ YES</span>'
+                        : '<span class="badge badge-success">✓ NO</span>'}</td>
+                <td>${formatDate(r.timestamp)}</td>
+            </tr>`).join('');
+    }
+
+    await checkServer();
+    await loadStats();
+})();
+</script>
+</body>
+</html>

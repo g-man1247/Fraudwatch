@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Stations — Air Quality Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌿</div>
+        <div class="logo-title">Air Quality Hub</div>
+        <div class="logo-sub">Urban Monitoring System</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="index.html"      class="nav-link"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Management</div>
+        <a href="industries.html" class="nav-link"><span class="icon">🏭</span> Industries</a>
+        <a href="stations.html"   class="nav-link active"><span class="icon">📡</span> Monitoring Stations</a>
+        <div class="nav-section">Monitoring</div>
+        <a href="readings.html"   class="nav-link"><span class="icon">📈</span> Air Quality Readings</a>
+        <a href="violations.html" class="nav-link"><span class="icon">🚨</span> Violations</a>
+        <div class="nav-section">Compliance</div>
+        <a href="fines.html"      class="nav-link"><span class="icon">💰</span> Fines & Payments</a>
+    </nav>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">📡 Monitoring Stations</div>
+            <div class="topbar-sub">Manage air quality monitoring stations linked to industries</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">＋ Add Station</button>
+    </div>
+
+    <div class="content">
+
+        <div id="alert" class="alert"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Monitoring Stations</span>
+                <button class="btn btn-outline btn-sm" onclick="loadStations()">↻ Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Station Name</th>
+                            <th>Location</th>
+                            <th>Linked Industry</th>
+                            <th>Industry Compliance</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stationTable">
+                        <tr><td colspan="6" class="loading">Loading stations…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ── Add / Edit Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Add Monitoring Station</span>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Station Name *</label>
+                    <input type="text" id="stationName" placeholder="e.g. Station Alpha">
+                </div>
+                <div class="form-group">
+                    <label>Location *</label>
+                    <input type="text" id="stationLocation" placeholder="e.g. North Zone, Coimbatore">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Linked Industry *</label>
+                    <select id="industrySelect"></select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveStation()">💾 Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    let editingId = null;
+
+    async function loadStations() {
+        try {
+            const stations = await apiGet('/stations');
+            const tbody = document.getElementById('stationTable');
+            if (stations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📡</div><p>No stations yet. Click "Add Station" to get started.</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = stations.map(s => `
+                <tr>
+                    <td>${s.id}</td>
+                    <td><strong>${s.stationName}</strong></td>
+                    <td>${s.location || '—'}</td>
+                    <td>${s.industry ? s.industry.industryName : '—'}</td>
+                    <td>${s.industry ? complianceBadge(s.industry.complianceStatus) : '—'}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="editStation(${s.id})">✏ Edit</button>
+                        <button class="btn btn-danger  btn-sm" onclick="deleteStation(${s.id}, '${s.stationName}')">🗑 Delete</button>
+                    </td>
+                </tr>`).join('');
+        } catch (e) {
+            showAlert('alert', 'Failed to load stations: ' + e.message, 'danger');
+        }
+    }
+
+    async function openAddModal() {
+        editingId = null;
+        document.getElementById('modalTitle').textContent = 'Add Monitoring Station';
+        document.getElementById('stationName').value     = '';
+        document.getElementById('stationLocation').value = '';
+        await populateIndustrySelect('industrySelect');
+        document.getElementById('modal').classList.add('show');
+    }
+
+    async function editStation(id) {
+        try {
+            const s = await apiGet('/stations/' + id);
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Station';
+            document.getElementById('stationName').value     = s.stationName;
+            document.getElementById('stationLocation').value = s.location || '';
+            await populateIndustrySelect('industrySelect');
+            if (s.industry) document.getElementById('industrySelect').value = s.industry.id;
+            document.getElementById('modal').classList.add('show');
+        } catch (e) {
+            showAlert('alert', 'Could not load station: ' + e.message, 'danger');
+        }
+    }
+
+    async function saveStation() {
+        const name     = document.getElementById('stationName').value.trim();
+        const location = document.getElementById('stationLocation').value.trim();
+        const indId    = document.getElementById('industrySelect').value;
+
+        if (!name || !location) { showAlert('alert', 'Station Name and Location are required.', 'danger'); return; }
+        if (!indId)             { showAlert('alert', 'Please select an industry.', 'danger'); return; }
+
+        const payload = {
+            stationName: name,
+            location:    location,
+            industry: { id: parseInt(indId) }
+        };
+
+        try {
+            if (editingId) {
+                await apiPut('/stations/' + editingId, payload);
+                showAlert('alert', '✅ Station updated successfully!', 'success');
+            } else {
+                await apiPost('/stations', payload);
+                showAlert('alert', '✅ Station added successfully!', 'success');
+            }
+            closeModal();
+            loadStations();
+        } catch (e) {
+            showAlert('alert', 'Save failed: ' + e.message, 'danger');
+        }
+    }
+
+    async function deleteStation(id, name) {
+        if (!confirm(`Delete station "${name}"?`)) return;
+        try {
+            await apiDelete('/stations/' + id);
+            showAlert('alert', `✅ Station "${name}" deleted.`, 'success');
+            loadStations();
+        } catch (e) {
+            showAlert('alert', 'Delete failed: ' + e.message, 'danger');
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('show');
+    }
+
+    loadStations();
+</script>
+</body>
+</html>

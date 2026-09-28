@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violations — Air Quality Hub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">🌿</div>
+        <div class="logo-title">Air Quality Hub</div>
+        <div class="logo-sub">Urban Monitoring System</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="index.html"      class="nav-link"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Management</div>
+        <a href="industries.html" class="nav-link"><span class="icon">🏭</span> Industries</a>
+        <a href="stations.html"   class="nav-link"><span class="icon">📡</span> Monitoring Stations</a>
+        <div class="nav-section">Monitoring</div>
+        <a href="readings.html"   class="nav-link"><span class="icon">📈</span> Air Quality Readings</a>
+        <a href="violations.html" class="nav-link active"><span class="icon">🚨</span> Violations</a>
+        <div class="nav-section">Compliance</div>
+        <a href="fines.html"      class="nav-link"><span class="icon">💰</span> Fines & Payments</a>
+    </nav>
+</aside>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">🚨 Violations Log</div>
+            <div class="topbar-sub">Automatically generated when pollutant levels exceed thresholds</div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div id="alert" class="alert"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Recorded Violations</span>
+                <button class="btn btn-outline btn-sm" onclick="loadViolations()">↻ Refresh</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Industry</th>
+                            <th>Station</th>
+                            <th>Pollutant</th>
+                            <th>Measured / Permissible</th>
+                            <th>Severity</th>
+                            <th>Date & Time</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violationTable">
+                        <tr><td colspan="8" class="loading">Loading violations…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    async function loadViolations() {
+        try {
+            const violations = await apiGet('/violations');
+            const tbody = document.getElementById('violationTable');
+            if (violations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">✅</div><p>No violations recorded yet. Good job!</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = [...violations].reverse().map(v => `
+                <tr>
+                    <td>${v.id}</td>
+                    <td><strong>${v.industry ? v.industry.industryName : '—'}</strong></td>
+                    <td>${v.station ? v.station.stationName : '—'}</td>
+                    <td><span class="badge badge-gray">${v.pollutant}</span></td>
+                    <td><strong class="text-danger">${v.measuredValue}</strong> <span style="color:#94a3b8;font-size:11px;">/ ${v.permissibleValue}</span></td>
+                    <td>${severityBadge(v.severity)}</td>
+                    <td>${formatDate(v.violationDate)}</td>
+                    <td style="max-width:250px; font-size:12px; color:var(--text-muted);">${v.description || '—'}</td>
+                </tr>`).join('');
+        } catch (e) {
+            showAlert('alert', 'Failed to load violations: ' + e.message, 'danger');
+        }
+    }
+
+    // Init
+    loadViolations();
+</script>
+</body>
+</html>
