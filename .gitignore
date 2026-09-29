@@ -1,26 +1,5 @@
-# ─── Maven ───────────────────────────────────────────
+
+jdk-17.0.2/
+jdk17.zip
 target/
 *.class
-*.jar
-*.war
-
-# ─── IDE files ───────────────────────────────────────
-.idea/
-*.iml
-*.iws
-.vscode/
-*.eclipse
-.classpath
-.project
-.settings/
-
-# ─── OS ──────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-
-# ─── Logs ────────────────────────────────────────────
-*.log
-logs/
-
-# ─── Spring Boot ─────────────────────────────────────
-spring-shell.log
